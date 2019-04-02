@@ -545,17 +545,17 @@ var Game = new Class({
 
         //  Run the Pre-render (clearing the canvas, setting background colors, etc)
 
-        renderer.preRender();
+        if (!this.skipFrames) renderer.preRender();
 
         eventEmitter.emit('prerender', renderer, time, delta);
 
         //  The main render loop. Iterates all Scenes and all Cameras in those scenes, rendering to the renderer instance.
 
-        this.scene.render(renderer);
+        if (!this.skipFrames) this.scene.render(renderer);
 
         //  The Post-Render call. Tidies up loose end, takes snapshots, etc.
 
-        renderer.postRender();
+        if (!this.skipFrames) renderer.postRender();
 
         //  The final event before the step repeats. Your last chance to do anything to the canvas before it all starts again.
 
