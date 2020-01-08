@@ -1,36 +1,7 @@
 /**
  * @author       Richard Davey <rich@photonstorm.com>
- * @copyright    2018 Photon Storm Ltd.
- * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
- */
-
-/**
- * @typedef {object} BitmapTextSize
- *
- * @property {GlobalBitmapTextSize} global - The position and size of the BitmapText, taking into account the position and scale of the Game Object.
- * @property {LocalBitmapTextSize} local - The position and size of the BitmapText, taking just the font size into account.
- */
-
-/**
- * The position and size of the Bitmap Text in global space, taking into account the Game Object's scale and world position.
- *
- * @typedef {object} GlobalBitmapTextSize
- *
- * @property {number} x - The x position of the BitmapText, taking into account the x position and scale of the Game Object.
- * @property {number} y - The y position of the BitmapText, taking into account the y position and scale of the Game Object.
- * @property {number} width - The width of the BitmapText, taking into account the x scale of the Game Object.
- * @property {number} height - The height of the BitmapText, taking into account the y scale of the Game Object.
- */
-
-/**
- * The position and size of the Bitmap Text in local space, taking just the font size into account.
- *
- * @typedef {object} LocalBitmapTextSize
- *
- * @property {number} x - The x position of the BitmapText.
- * @property {number} y - The y position of the BitmapText.
- * @property {number} width - The width of the BitmapText.
- * @property {number} height - The height of the BitmapText.
+ * @copyright    2019 Photon Storm Ltd.
+ * @license      {@link https://opensource.org/licenses/MIT|MIT License}
  */
 
 /**
@@ -51,7 +22,7 @@
  * @param {boolean} [round] - Whether to round the results to the nearest integer.
  * @param {object} [out] - Optional object to store the results in, to save constant object creation.
  *
- * @return {BitmapTextSize} The calculated position, width and height of the BitmapText.
+ * @return {Phaser.Types.GameObjects.BitmapText.BitmapTextSize} The calculated position, width and height of the BitmapText.
  */
 var GetBitmapTextSize = function (src, round, out)
 {
@@ -73,13 +44,22 @@ var GetBitmapTextSize = function (src, round, out)
             lines: {
                 shortest: 0,
                 longest: 0,
-                lengths: null
-            }
+                lengths: null,
+                height: 0
+            },
+            wrappedText: '',
+            words: [],
+            scaleX: 0,
+            scaleY: 0
         };
+
+        return out;
     }
 
     var text = src.text;
     var textLength = text.length;
+    var maxWidth = src.maxWidth;
+    var wordWrapCharCode = src.wordWrapCharCode;
 
     var bx = Number.MAX_VALUE;
     var by = Number.MAX_VALUE;
@@ -112,12 +92,195 @@ var GetBitmapTextSize = function (src, round, out)
     var currentLine = 0;
     var currentLineWidth = 0;
 
-    for (var i = 0; i < textLength; i++)
+    var i;
+    var words = [];
+    var current = null;
+
+    //  Scan for breach of maxWidth and insert carriage-returns
+    if (maxWidth > 0)
+    {
+        for (i = 0; i < textLength; i++)
+        {
+            charCode = text.charCodeAt(i);
+
+            if (charCode === 10)
+            {
+                if (current !== null)
+                {
+                    words.push({
+                        word: current.word,
+                        i: current.i,
+                        x: current.x * sx,
+                        y: current.y * sy,
+                        w: current.w * sx,
+                        h: current.h * sy,
+                        cr: true
+                    });
+
+                    current = null;
+                }
+
+                xAdvance = 0;
+                yAdvance += lineHeight;
+                lastGlyph = null;
+
+                continue;
+            }
+
+            glyph = chars[charCode];
+
+            if (!glyph)
+            {
+                continue;
+            }
+
+            if (lastGlyph !== null)
+            {
+                var glyphKerningOffset = glyph.kerning[lastCharCode];
+            }
+
+            if (charCode === wordWrapCharCode)
+            {
+                if (current !== null)
+                {
+                    words.push({
+                        word: current.word,
+                        i: current.i,
+                        x: current.x * sx,
+                        y: current.y * sy,
+                        w: current.w * sx,
+                        h: current.h * sy,
+                        cr: false
+                    });
+    
+                    current = null;
+                }
+            }
+            else
+            {
+                if (current === null)
+                {
+                    //  We're starting a new word, recording the starting index, etc
+                    current = { word: '', i: i, x: xAdvance, y: yAdvance, w: 0, h: lineHeight, cr: false };
+                }
+
+                current.word = current.word.concat(text[i]);
+                current.w += glyph.xOffset + glyph.xAdvance + ((glyphKerningOffset !== undefined) ? glyphKerningOffset : 0);
+            }
+
+            xAdvance += glyph.xAdvance + letterSpacing;
+            lastGlyph = glyph;
+            lastCharCode = charCode;
+        }
+
+        //  Last word
+        if (current !== null)
+        {
+            words.push({
+                word: current.word,
+                i: current.i,
+                x: current.x * sx,
+                y: current.y * sy,
+                w: current.w * sx,
+                h: current.h * sy,
+                cr: false
+            });
+        }
+
+        //  Reset for the next loop
+        xAdvance = 0;
+        yAdvance = 0;
+        lastGlyph = null;
+        lastCharCode = 0;
+
+        //  Loop through the words array and see if we've got any > maxWidth
+        var prev;
+        var offset = 0;
+        var crs = [];
+
+        for (i = 0; i < words.length; i++)
+        {
+            var entry = words[i];
+            var left = entry.x;
+            var right = entry.x + entry.w;
+
+            if (prev)
+            {
+                var diff = left - (prev.x + prev.w);
+
+                offset = left - (diff + prev.w);
+
+                prev = null;
+            }
+
+            var checkLeft = left - offset;
+            var checkRight = right - offset;
+
+            if (checkLeft > maxWidth || checkRight > maxWidth)
+            {
+                crs.push(entry.i - 1);
+
+                if (entry.cr)
+                {
+                    crs.push(entry.i + entry.word.length);
+
+                    offset = 0;
+                    prev = null;
+                }
+                else
+                {
+                    prev = entry;
+                }
+            }
+            else if (entry.cr)
+            {
+                crs.push(entry.i + entry.word.length);
+
+                offset = 0;
+                prev = null;
+            }
+        }
+
+        var stringInsert = function (str, index, value)
+        {
+            return str.substr(0, index) + value + str.substr(index + 1);
+        };
+
+        for (i = crs.length - 1; i >= 0; i--)
+        {
+            // eslint-disable-next-line quotes
+            text = stringInsert(text, crs[i], "\n");
+        }
+
+        out.wrappedText = text;
+
+        textLength = text.length;
+
+        //  Recalculated in the next loop
+        words = [];
+        current = null;
+    }
+
+    for (i = 0; i < textLength; i++)
     {
         charCode = text.charCodeAt(i);
 
         if (charCode === 10)
         {
+            if (current !== null)
+            {
+                words.push({
+                    word: current.word,
+                    i: current.i,
+                    x: current.x * sx,
+                    y: current.y * sy,
+                    w: current.w * sx,
+                    h: current.h * sy
+                });
+
+                current = null;
+            }
+
             xAdvance = 0;
             yAdvance += lineHeight;
             lastGlyph = null;
@@ -136,6 +299,7 @@ var GetBitmapTextSize = function (src, round, out)
 
             currentLine++;
             currentLineWidth = 0;
+
             continue;
         }
 
@@ -152,6 +316,7 @@ var GetBitmapTextSize = function (src, round, out)
         if (lastGlyph !== null)
         {
             var kerningOffset = glyph.kerning[lastCharCode];
+
             x += (kerningOffset !== undefined) ? kerningOffset : 0;
         }
 
@@ -178,10 +343,51 @@ var GetBitmapTextSize = function (src, round, out)
             bh = gh;
         }
 
+        if (charCode === wordWrapCharCode)
+        {
+            if (current !== null)
+            {
+                words.push({
+                    word: current.word,
+                    i: current.i,
+                    x: current.x * sx,
+                    y: current.y * sy,
+                    w: current.w * sx,
+                    h: current.h * sy
+                });
+    
+                current = null;
+            }
+        }
+        else
+        {
+            if (current === null)
+            {
+                //  We're starting a new word, recording the starting index, etc
+                current = { word: '', i: i, x: xAdvance, y: yAdvance, w: 0, h: lineHeight };
+            }
+
+            current.word = current.word.concat(text[i]);
+            current.w += glyph.xOffset + glyph.xAdvance + ((kerningOffset !== undefined) ? kerningOffset : 0);
+        }
+
         xAdvance += glyph.xAdvance + letterSpacing;
         lastGlyph = glyph;
         lastCharCode = charCode;
         currentLineWidth = gw * scale;
+    }
+
+    //  Last word
+    if (current !== null)
+    {
+        words.push({
+            word: current.word,
+            i: current.i,
+            x: current.x * sx,
+            y: current.y * sy,
+            w: current.w * sx,
+            h: current.h * sy
+        });
     }
 
     lineWidths[currentLine] = currentLineWidth;
@@ -229,6 +435,11 @@ var GetBitmapTextSize = function (src, round, out)
         lines.shortest = Math.round(shortestLine);
         lines.longest = Math.round(longestLine);
     }
+
+    out.words = words;
+    out.lines.height = lineHeight;
+    out.scaleX = src.scaleX;
+    out.scaleY = src.scaleY;
 
     return out;
 };

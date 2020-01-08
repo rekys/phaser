@@ -1,7 +1,7 @@
 /**
  * @author       Richard Davey <rich@photonstorm.com>
- * @copyright    2018 Photon Storm Ltd.
- * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ * @copyright    2019 Photon Storm Ltd.
+ * @license      {@link https://opensource.org/licenses/MIT|MIT License}
  */
 
 var Utils = require('../../renderer/webgl/Utils');
@@ -94,7 +94,7 @@ var BlitterWebGLRenderer = function (renderer, src, interpolationPercentage, cam
         var tx1 = calcMatrix.getX(xw, yh);
         var ty1 = calcMatrix.getY(xw, yh);
 
-        var tint = Utils.getTintAppendFloatAlpha(0xffffff, bobAlpha);
+        var tint = Utils.getTintAppendFloatAlpha(bob.tint, bobAlpha);
 
         //  Bind texture only if the Texture Source is different from before
         if (frame.sourceIndex !== prevTextureSourceIndex)
@@ -106,15 +106,15 @@ var BlitterWebGLRenderer = function (renderer, src, interpolationPercentage, cam
 
         if (roundPixels)
         {
-            tx0 |= 0;
-            ty0 |= 0;
+            tx0 = Math.round(tx0);
+            ty0 = Math.round(ty0);
 
-            tx1 |= 0;
-            ty1 |= 0;
+            tx1 = Math.round(tx1);
+            ty1 = Math.round(ty1);
         }
 
         //  TL x/y, BL x/y, BR x/y, TR x/y
-        if (pipeline.batchQuad(tx0, ty0, tx0, ty1, tx1, ty1, tx1, ty0, frame.u0, frame.v0, frame.u1, frame.v1, tint, tint, tint, tint, tintEffect))
+        if (pipeline.batchQuad(tx0, ty0, tx0, ty1, tx1, ty1, tx1, ty0, frame.u0, frame.v0, frame.u1, frame.v1, tint, tint, tint, tint, tintEffect, frame.glTexture, 0))
         {
             prevTextureSourceIndex = -1;
         }

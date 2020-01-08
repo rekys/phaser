@@ -1,7 +1,7 @@
 /**
  * @author       Richard Davey <rich@photonstorm.com>
- * @copyright    2018 Photon Storm Ltd.
- * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ * @copyright    2019 Photon Storm Ltd.
+ * @license      {@link https://opensource.org/licenses/MIT|MIT License}
  */
 
 var ParseXMLBitmapFont = require('./ParseXMLBitmapFont');
@@ -20,8 +20,8 @@ var ParseXMLBitmapFont = require('./ParseXMLBitmapFont');
  * @param {string} textureKey - The key of the BitmapFont's texture.
  * @param {string} frameKey - The key of the BitmapFont texture's frame.
  * @param {string} xmlKey - The key of the XML data of the font to parse.
- * @param {integer} xSpacing - The x-axis spacing to add between each letter.
- * @param {integer} ySpacing - The y-axis spacing to add to the line height.
+ * @param {integer} [xSpacing] - The x-axis spacing to add between each letter.
+ * @param {integer} [ySpacing] - The y-axis spacing to add to the line height.
  *
  * @return {boolean} Whether the parsing was successful or not.
  */

@@ -1,7 +1,7 @@
 /**
  * @author       Richard Davey <rich@photonstorm.com>
- * @copyright    2018 Photon Storm Ltd.
- * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ * @copyright    2019 Photon Storm Ltd.
+ * @license      {@link https://opensource.org/licenses/MIT|MIT License}
  */
 
 var Class = require('../../../utils/Class');
@@ -9,54 +9,13 @@ var Components = require('../../components');
 var GameObject = require('../../GameObject');
 var GetBitmapTextSize = require('../GetBitmapTextSize');
 var ParseFromAtlas = require('../ParseFromAtlas');
+var ParseXMLBitmapFont = require('../ParseXMLBitmapFont');
 var Render = require('./BitmapTextRender');
-
-/**
- * The font data for an individual character of a Bitmap Font.
- *
- * Describes the character's position, size, offset and kerning.
- *
- * @typedef {object} BitmapFontCharacterData
- *
- * @property {number} x - The x position of the character.
- * @property {number} y - The y position of the character.
- * @property {number} width - The width of the character.
- * @property {number} height - The height of the character.
- * @property {number} centerX - The center x position of the character.
- * @property {number} centerY - The center y position of the character.
- * @property {number} xOffset - The x offset of the character.
- * @property {number} yOffset - The y offset of the character.
- * @property {object} data - Extra data for the character.
- * @property {Object.<number>} kerning - Kerning values, keyed by character code.
- */
-
-/**
- * Bitmap Font data that can be used by a BitmapText Game Object.
- *
- * @typedef {object} BitmapFontData
- *
- * @property {string} font - The name of the font.
- * @property {number} size - The size of the font.
- * @property {number} lineHeight - The line height of the font.
- * @property {boolean} retroFont - Whether this font is a retro font (monospace).
- * @property {Object.<number, BitmapFontCharacterData>} chars - The character data of the font, keyed by character code. Each character datum includes a position, size, offset and more.
- */
-
-/**
- * @typedef {object} JSONBitmapText
- * @extends {JSONGameObject}
- *
- * @property {string} font - The name of the font.
- * @property {string} text - The text that this Bitmap Text displays.
- * @property {number} fontSize - The size of the font.
- * @property {number} letterSpacing - Adds / Removes spacing between characters.
- * @property {integer} align - The alignment of the text in a multi-line BitmapText object.
- */
 
 /**
  * @classdesc
  * BitmapText objects work by taking a texture file and an XML or JSON file that describes the font structure.
- * 
+ *
  * During rendering for each letter of the text is rendered to the display, proportionally spaced out and aligned to
  * match the font structure.
  *
@@ -68,12 +27,12 @@ var Render = require('./BitmapTextRender');
  *
  * To create a BitmapText data files you need a 3rd party app such as:
  *
- * BMFont (Windows, free): http://www.angelcode.com/products/bmfont/
- * Glyph Designer (OS X, commercial): http://www.71squared.com/en/glyphdesigner
- * Littera (Web-based, free): http://kvazars.com/littera/
+ * BMFont (Windows, free): {@link http://www.angelcode.com/products/bmfont/|http://www.angelcode.com/products/bmfont/}
+ * Glyph Designer (OS X, commercial): {@link http://www.71squared.com/en/glyphdesigner|http://www.71squared.com/en/glyphdesigner}
+ * Littera (Web-based, free): {@link http://kvazars.com/littera/|http://kvazars.com/littera/}
  *
  * For most use cases it is recommended to use XML. If you wish to use JSON, the formatting should be equal to the result of
- * converting a valid XML file through the popular X2JS library. An online tool for conversion can be found here: http://codebeautify.org/xmltojson
+ * converting a valid XML file through the popular X2JS library. An online tool for conversion can be found here: {@link http://codebeautify.org/xmltojson|http://codebeautify.org/xmltojson}
  *
  * @class BitmapText
  * @extends Phaser.GameObjects.GameObject
@@ -87,7 +46,6 @@ var Render = require('./BitmapTextRender');
  * @extends Phaser.GameObjects.Components.Mask
  * @extends Phaser.GameObjects.Components.Origin
  * @extends Phaser.GameObjects.Components.Pipeline
- * @extends Phaser.GameObjects.Components.ScaleMode
  * @extends Phaser.GameObjects.Components.ScrollFactor
  * @extends Phaser.GameObjects.Components.Texture
  * @extends Phaser.GameObjects.Components.Tint
@@ -113,7 +71,6 @@ var BitmapText = new Class({
         Components.Mask,
         Components.Origin,
         Components.Pipeline,
-        Components.ScaleMode,
         Components.ScrollFactor,
         Components.Texture,
         Components.Tint,
@@ -148,7 +105,7 @@ var BitmapText = new Class({
          * The data of the Bitmap Font used by this Bitmap Text.
          *
          * @name Phaser.GameObjects.BitmapText#fontData
-         * @type {BitmapFontData}
+         * @type {Phaser.Types.GameObjects.BitmapText.BitmapFontData}
          * @readonly
          * @since 3.0.0
          */
@@ -210,11 +167,11 @@ var BitmapText = new Class({
          * An object that describes the size of this Bitmap Text.
          *
          * @name Phaser.GameObjects.BitmapText#_bounds
-         * @type {BitmapTextSize}
+         * @type {Phaser.Types.GameObjects.BitmapText.BitmapTextSize}
          * @private
          * @since 3.0.0
          */
-        this._bounds = GetBitmapTextSize(this, false, this._bounds);
+        this._bounds = GetBitmapTextSize();
 
         /**
          * An internal dirty flag for bounds calculation.
@@ -224,7 +181,27 @@ var BitmapText = new Class({
          * @private
          * @since 3.11.0
          */
-        this._dirty = false;
+        this._dirty = true;
+
+        /**
+         * Internal cache var holding the maxWidth.
+         *
+         * @name Phaser.GameObjects.BitmapText#_maxWidth
+         * @type {number}
+         * @private
+         * @since 3.21.0
+         */
+        this._maxWidth = 0;
+
+        /**
+         * The character code used to detect for word wrapping.
+         * Defaults to 32 (a space character).
+         *
+         * @name Phaser.GameObjects.BitmapText#wordWrapCharCode
+         * @type {number}
+         * @since 3.21.0
+         */
+        this.wordWrapCharCode = 32;
 
         this.setTexture(entry.texture, entry.frame);
         this.setPosition(x, y);
@@ -383,7 +360,7 @@ var BitmapText = new Class({
      *
      * @param {boolean} [round] - Whether to round the results to the nearest integer.
      *
-     * @return {BitmapTextSize} An object that describes the size of this Bitmap Text.
+     * @return {Phaser.Types.GameObjects.BitmapText.BitmapTextSize} An object that describes the size of this Bitmap Text.
      */
     getTextBounds: function (round)
     {
@@ -391,12 +368,18 @@ var BitmapText = new Class({
         //  global = The BitmapText, taking into account scale and world position
         //  lines = The BitmapText line data
 
-        if (this._dirty)
+        var bounds = this._bounds;
+
+        if (this._dirty || this.scaleX !== bounds.scaleX || this.scaleY !== bounds.scaleY)
         {
-            GetBitmapTextSize(this, round, this._bounds);
+            GetBitmapTextSize(this, round, bounds);
+
+            this._dirty = false;
+
+            this.updateDisplayOrigin();
         }
 
-        return this._bounds;
+        return bounds;
     },
 
     /**
@@ -434,6 +417,40 @@ var BitmapText = new Class({
 
                 GetBitmapTextSize(this, false, this._bounds);
             }
+        }
+
+        return this;
+    },
+
+    /**
+     * Sets the maximum display width of this BitmapText in pixels.
+     *
+     * If `BitmapText.text` is longer than `maxWidth` then the lines will be automatically wrapped
+     * based on the previous whitespace character found in the line.
+     *
+     * If no whitespace was found then no wrapping will take place and consequently the `maxWidth` value will not be honored.
+     *
+     * Disable maxWidth by setting the value to 0.
+     *
+     * You can set the whitespace character to be searched for by setting the `wordWrapCharCode` parameter or property.
+     *
+     * @method Phaser.GameObjects.BitmapText#setMaxWidth
+     * @since 3.21.0
+     *
+     * @param {number} value - The maximum display width of this BitmapText in pixels. Set to zero to disable.
+     * @param {number} [wordWrapCharCode] - The character code to check for when word wrapping. Defaults to 32 (the space character).
+     *
+     * @return {this} This BitmapText Object.
+     */
+    setMaxWidth: function (value, wordWrapCharCode)
+    {
+        this._maxWidth = value;
+
+        this._dirty = true;
+
+        if (wordWrapCharCode !== undefined)
+        {
+            this.wordWrapCharCode = wordWrapCharCode;
         }
 
         return this;
@@ -546,6 +563,35 @@ var BitmapText = new Class({
     },
 
     /**
+     * The maximum display width of this BitmapText in pixels.
+     *
+     * If BitmapText.text is longer than maxWidth then the lines will be automatically wrapped
+     * based on the last whitespace character found in the line.
+     *
+     * If no whitespace was found then no wrapping will take place and consequently the maxWidth value will not be honored.
+     *
+     * Disable maxWidth by setting the value to 0.
+     *
+     * @name Phaser.GameObjects.BitmapText#maxWidth
+     * @type {number}
+     * @since 3.21.0
+     */
+    maxWidth: {
+
+        set: function (value)
+        {
+            this._maxWidth = value;
+            this._dirty = true;
+        },
+
+        get: function ()
+        {
+            return this._maxWidth;
+        }
+
+    },
+
+    /**
      * The width of this Bitmap Text.
      *
      * @name Phaser.GameObjects.BitmapText#width
@@ -589,7 +635,7 @@ var BitmapText = new Class({
      * @method Phaser.GameObjects.BitmapText#toJSON
      * @since 3.0.0
      *
-     * @return {JSONBitmapText} A JSON representation of this Bitmap Text.
+     * @return {Phaser.Types.GameObjects.BitmapText.JSONBitmapText} A JSON representation of this Bitmap Text.
      */
     toJSON: function ()
     {
@@ -639,6 +685,39 @@ BitmapText.ALIGN_CENTER = 1;
  */
 BitmapText.ALIGN_RIGHT = 2;
 
+/**
+ * Parse an XML Bitmap Font from an Atlas.
+ *
+ * Adds the parsed Bitmap Font data to the cache with the `fontName` key.
+ *
+ * @method Phaser.GameObjects.BitmapText.ParseFromAtlas
+ * @since 3.0.0
+ *
+ * @param {Phaser.Scene} scene - The Scene to parse the Bitmap Font for.
+ * @param {string} fontName - The key of the font to add to the Bitmap Font cache.
+ * @param {string} textureKey - The key of the BitmapFont's texture.
+ * @param {string} frameKey - The key of the BitmapFont texture's frame.
+ * @param {string} xmlKey - The key of the XML data of the font to parse.
+ * @param {integer} [xSpacing] - The x-axis spacing to add between each letter.
+ * @param {integer} [ySpacing] - The y-axis spacing to add to the line height.
+ *
+ * @return {boolean} Whether the parsing was successful or not.
+ */
 BitmapText.ParseFromAtlas = ParseFromAtlas;
+
+/**
+ * Parse an XML font to Bitmap Font data for the Bitmap Font cache.
+ *
+ * @method Phaser.GameObjects.BitmapText.ParseXMLBitmapFont
+ * @since 3.17.0
+ *
+ * @param {XMLDocument} xml - The XML Document to parse the font from.
+ * @param {integer} [xSpacing=0] - The x-axis spacing to add between each letter.
+ * @param {integer} [ySpacing=0] - The y-axis spacing to add to the line height.
+ * @param {Phaser.Textures.Frame} [frame] - The texture frame to take into account while parsing.
+ *
+ * @return {Phaser.Types.GameObjects.BitmapText.BitmapFontData} The parsed Bitmap Font data.
+ */
+BitmapText.ParseXMLBitmapFont = ParseXMLBitmapFont;
 
 module.exports = BitmapText;

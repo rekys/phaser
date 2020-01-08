@@ -1,7 +1,7 @@
 /**
  * @author       Richard Davey <rich@photonstorm.com>
- * @copyright    2018 Photon Storm Ltd.
- * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ * @copyright    2019 Photon Storm Ltd.
+ * @license      {@link https://opensource.org/licenses/MIT|MIT License}
  */
 
 /**
@@ -68,7 +68,10 @@ var StaticTilemapLayerCanvasRenderer = function (renderer, src, interpolationPer
 
     var alpha = camera.alpha * src.alpha;
 
-    ctx.globalAlpha = camera.alpha * src.alpha;
+    if (!renderer.antialias || src.scaleX > 1 || src.scaleY > 1)
+    {
+        ctx.imageSmoothingEnabled = false;
+    }
 
     for (var i = 0; i < tileCount; i++)
     {
@@ -86,8 +89,10 @@ var StaticTilemapLayerCanvasRenderer = function (renderer, src, interpolationPer
 
         if (tileTexCoords)
         {
-            var halfWidth = tile.width / 2;
-            var halfHeight = tile.height / 2;
+            var tileWidth = tileset.tileWidth;
+            var tileHeight = tileset.tileHeight;
+            var halfWidth = tileWidth / 2;
+            var halfHeight = tileHeight / 2;
     
             ctx.save();
 
@@ -108,9 +113,9 @@ var StaticTilemapLayerCanvasRenderer = function (renderer, src, interpolationPer
             ctx.drawImage(
                 image,
                 tileTexCoords.x, tileTexCoords.y,
-                tile.width, tile.height,
+                tileWidth, tileHeight,
                 -halfWidth, -halfHeight,
-                tile.width, tile.height
+                tileWidth, tileHeight
             );
     
             ctx.restore();

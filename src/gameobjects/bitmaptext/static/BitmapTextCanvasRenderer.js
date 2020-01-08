@@ -1,7 +1,7 @@
 /**
  * @author       Richard Davey <rich@photonstorm.com>
- * @copyright    2018 Photon Storm Ltd.
- * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ * @copyright    2019 Photon Storm Ltd.
+ * @license      {@link https://opensource.org/licenses/MIT|MIT License}
  */
 
 var SetTransform = require('../../../renderer/canvas/utils/SetTransform');
@@ -68,7 +68,14 @@ var BitmapTextCanvasRenderer = function (renderer, src, interpolationPercentage,
     var lineOffsetX = 0;
 
     //  Update the bounds - skipped internally if not dirty
-    src.getTextBounds(false);
+    var bounds = src.getTextBounds(false);
+
+    //  In case the method above changed it (word wrapping)
+    if (src.maxWidth > 0)
+    {
+        text = bounds.wrappedText;
+        textLength = text.length;
+    }
 
     var lineData = src._bounds.lines;
 
@@ -148,8 +155,8 @@ var BitmapTextCanvasRenderer = function (renderer, src, interpolationPercentage,
 
         if (roundPixels)
         {
-            x |= 0;
-            y |= 0;
+            x = Math.round(x);
+            y = Math.round(y);
         }
 
         ctx.save();

@@ -1,7 +1,7 @@
 /**
  * @author       Richard Davey <rich@photonstorm.com>
- * @copyright    2018 Photon Storm Ltd.
- * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ * @copyright    2019 Photon Storm Ltd.
+ * @license      {@link https://opensource.org/licenses/MIT|MIT License}
  */
 
 var Body = require('../lib/body/Body');
@@ -17,7 +17,7 @@ var _FLAG = 4; // 0100
 /**
  * Provides methods used for getting and setting the position, scale and rotation of a Game Object.
  *
- * @name Phaser.Physics.Matter.Components.Transform
+ * @namespace Phaser.Physics.Matter.Components.Transform
  * @since 3.0.0
  */
 var Transform = {
@@ -84,8 +84,9 @@ var Transform = {
 
         set: function (value)
         {
-            var factor = 1 / this._scaleX;
-
+            var factorX = 1 / this._scaleX;
+            var factorY = 1 / this._scaleY;
+    
             this._scaleX = value;
 
             if (this._scaleX === 0)
@@ -98,7 +99,7 @@ var Transform = {
             }
 
             //  Reset Matter scale back to 1 (sigh)
-            Body.scale(this.body, factor, this._scaleY);
+            Body.scale(this.body, factorX, factorY);
 
             Body.scale(this.body, value, this._scaleY);
         }
@@ -121,7 +122,8 @@ var Transform = {
 
         set: function (value)
         {
-            var factor = 1 / this._scaleY;
+            var factorX = 1 / this._scaleX;
+            var factorY = 1 / this._scaleY;
 
             this._scaleY = value;
 
@@ -134,7 +136,7 @@ var Transform = {
                 this.renderFlags |= _FLAG;
             }
 
-            Body.scale(this.body, this._scaleX, factor);
+            Body.scale(this.body, factorX, factorY);
 
             Body.scale(this.body, this._scaleX, value);
         }
@@ -142,7 +144,8 @@ var Transform = {
     },
 
     /**
-     * Use `angle` to set or get rotation of the physics body associated to this GameObject. Unlike rotation, when using set the value can be in degrees, which will be converted to radians internally.
+     * Use `angle` to set or get rotation of the physics body associated to this GameObject.
+     * Unlike rotation, when using set the value can be in degrees, which will be converted to radians internally.
      *
      * @name Phaser.Physics.Matter.Components.Transform#angle
      * @type {number}
@@ -163,7 +166,8 @@ var Transform = {
     },
 
     /**
-     * Use `rotation` to set or get the rotation of the physics body associated with this GameObject. The value when set must be in radians.
+     * Use `rotation` to set or get the rotation of the physics body associated with this GameObject.
+     * The value when set must be in radians.
      *
      * @name Phaser.Physics.Matter.Components.Transform#rotation
      * @type {number}
@@ -186,7 +190,61 @@ var Transform = {
     },
 
     /**
-     * Sets the position of the physics body along x and y axes. Both the parameters to this function are optional and if not passed any they default to 0.
+     * Returns the center x offset of the Body this Game Object is using.
+     * 
+     * This is calculated by taking the difference between the center of the frame and the center of
+     * the physics body. If set, the `body.render.sprite.xOffset` value is then added to it.
+     * 
+     * Use this when setting the Origin of a Physics Game Object post-creation, i.e.:
+     * 
+     * `setOrigin(originX + centerOffsetX, originY + centerOffsetY)`
+     *
+     * @name Phaser.Physics.Matter.Components.Transform#centerOffsetX
+     * @type {number}
+     * @readonly
+     * @since 3.22.0
+     */
+    centerOffsetX: {
+
+        get: function ()
+        {
+            return this.body.centerOfMass.x;
+
+            // var body = this.body;
+            // return body.render.sprite.xOffset + ((body.centerOfMass.x - (this.width / 2)) / this.width);
+        }
+    },
+
+    /**
+     * Returns the center y offset of the Body this Game Object is using.
+     * 
+     * This is calculated by taking the difference between the center of the frame and the center of
+     * the physics body. If set, the `body.render.sprite.yOffset` value is then added to it.
+     * 
+     * Use this when setting the Origin of a Physics Game Object post-creation, i.e.:
+     * 
+     * `setOrigin(originX + centerOffsetX, originY + centerOffsetY)`
+     *
+     * @name Phaser.Physics.Matter.Components.Transform#centerOffsetY
+     * @type {number}
+     * @readonly
+     * @since 3.22.0
+     */
+    centerOffsetY: {
+
+        get: function ()
+        {
+            return this.body.centerOfMass.y;
+
+            // var body = this.body;
+            // return body.render.sprite.yOffset + ((body.centerOfMass.y - (this.height / 2)) / this.height);
+        }
+    },
+
+    /**
+     * Sets the position of the physics body along x and y axes.
+     * Both the parameters to this function are optional and if not passed any they default to 0.
+     * Velocity, angle, force etc. are unchanged.
      *
      * @method Phaser.Physics.Matter.Components.Transform#setPosition
      * @since 3.0.0
@@ -209,12 +267,13 @@ var Transform = {
     },
 
     /**
-     * [description]
+     * Immediately sets the angle of the Body.
+     * Angular velocity, position, force etc. are unchanged.
      *
      * @method Phaser.Physics.Matter.Components.Transform#setRotation
      * @since 3.0.0
      *
-     * @param {number} [radians=0] - [description]
+     * @param {number} [radians=0] - The angle of the body, in radians.
      *
      * @return {this} This Game Object.
      */
@@ -230,7 +289,8 @@ var Transform = {
     },
 
     /**
-     * [description]
+     * Setting fixed rotation sets the Body inertia to Infinity, which stops it
+     * from being able to rotate when forces are applied to it.
      *
      * @method Phaser.Physics.Matter.Components.Transform#setFixedRotation
      * @since 3.0.0
@@ -245,12 +305,13 @@ var Transform = {
     },
 
     /**
-     * [description]
+     * Immediately sets the angle of the Body.
+     * Angular velocity, position, force etc. are unchanged.
      *
      * @method Phaser.Physics.Matter.Components.Transform#setAngle
      * @since 3.0.0
      *
-     * @param {number} [degrees=0] - [description]
+     * @param {number} [degrees=0] - The angle to set, in degrees.
      *
      * @return {this} This Game Object.
      */

@@ -1,11 +1,12 @@
 /**
  * @author       Richard Davey <rich@photonstorm.com>
- * @copyright    2018 Photon Storm Ltd.
- * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ * @copyright    2019 Photon Storm Ltd.
+ * @license      {@link https://opensource.org/licenses/MIT|MIT License}
  */
 
 var Class = require('../utils/Class');
 var PluginCache = require('../plugins/PluginCache');
+var SceneEvents = require('../scene/events');
 
 /**
  * @classdesc
@@ -61,15 +62,15 @@ var GameObjectFactory = new Class({
         /**
          * A reference to the Scene Update List.
          *
-         * @name Phaser.GameObjects.GameObjectFactory#updateList;
+         * @name Phaser.GameObjects.GameObjectFactory#updateList
          * @type {Phaser.GameObjects.UpdateList}
          * @protected
          * @since 3.0.0
          */
         this.updateList;
 
-        scene.sys.events.once('boot', this.boot, this);
-        scene.sys.events.on('start', this.start, this);
+        scene.sys.events.once(SceneEvents.BOOT, this.boot, this);
+        scene.sys.events.on(SceneEvents.START, this.start, this);
     },
 
     /**
@@ -85,7 +86,7 @@ var GameObjectFactory = new Class({
         this.displayList = this.systems.displayList;
         this.updateList = this.systems.updateList;
 
-        this.systems.events.once('destroy', this.destroy, this);
+        this.systems.events.once(SceneEvents.DESTROY, this.destroy, this);
     },
 
     /**
@@ -99,19 +100,19 @@ var GameObjectFactory = new Class({
      */
     start: function ()
     {
-        this.systems.events.once('shutdown', this.shutdown, this);
+        this.systems.events.once(SceneEvents.SHUTDOWN, this.shutdown, this);
     },
 
     /**
      * Adds an existing Game Object to this Scene.
-     * 
+     *
      * If the Game Object renders, it will be added to the Display List.
      * If it has a `preUpdate` method, it will be added to the Update List.
      *
      * @method Phaser.GameObjects.GameObjectFactory#existing
      * @since 3.0.0
      *
-     * @param {Phaser.GameObjects.GameObject} child - The child to be added to this Scene.
+     * @param {(Phaser.GameObjects.GameObject|Phaser.GameObjects.Group)} child - The child to be added to this Scene.
      *
      * @return {Phaser.GameObjects.GameObject} The Game Object that was added.
      */
@@ -140,7 +141,7 @@ var GameObjectFactory = new Class({
      */
     shutdown: function ()
     {
-        this.systems.events.off('shutdown', this.shutdown, this);
+        this.systems.events.off(SceneEvents.SHUTDOWN, this.shutdown, this);
     },
 
     /**
@@ -155,7 +156,7 @@ var GameObjectFactory = new Class({
     {
         this.shutdown();
 
-        this.scene.sys.events.off('start', this.start, this);
+        this.scene.sys.events.off(SceneEvents.START, this.start, this);
 
         this.scene = null;
         this.systems = null;
@@ -166,13 +167,43 @@ var GameObjectFactory = new Class({
 
 });
 
-//  Static method called directly by the Game Object factory functions
-
+/**
+ * Static method called directly by the Game Object factory functions.
+ * With this method you can register a custom GameObject factory in the GameObjectFactory,
+ * providing a name (`factoryType`) and the constructor (`factoryFunction`) in order
+ * to be called when you call to Phaser.Scene.add[ factoryType ] method.
+ *
+ * @method Phaser.GameObjects.GameObjectFactory.register
+ * @static
+ * @since 3.0.0
+ *
+ * @param {string} factoryType - The key of the factory that you will use to call to Phaser.Scene.add[ factoryType ] method.
+ * @param {function} factoryFunction - The constructor function to be called when you invoke to the Phaser.Scene.add method.
+ */
 GameObjectFactory.register = function (factoryType, factoryFunction)
 {
     if (!GameObjectFactory.prototype.hasOwnProperty(factoryType))
     {
         GameObjectFactory.prototype[factoryType] = factoryFunction;
+    }
+};
+
+/**
+ * Static method called directly by the Game Object factory functions.
+ * With this method you can remove a custom GameObject factory registered in the GameObjectFactory,
+ * providing a its `factoryType`.
+ *
+ * @method Phaser.GameObjects.GameObjectFactory.remove
+ * @static
+ * @since 3.0.0
+ *
+ * @param {string} factoryType - The key of the factory that you want to remove from the GameObjectFactory.
+ */
+GameObjectFactory.remove = function (factoryType)
+{
+    if (GameObjectFactory.prototype.hasOwnProperty(factoryType))
+    {
+        delete GameObjectFactory.prototype[factoryType];
     }
 };
 

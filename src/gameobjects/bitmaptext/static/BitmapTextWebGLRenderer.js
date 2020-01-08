@@ -1,7 +1,7 @@
 /**
  * @author       Richard Davey <rich@photonstorm.com>
- * @copyright    2018 Photon Storm Ltd.
- * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ * @copyright    2019 Photon Storm Ltd.
+ * @license      {@link https://opensource.org/licenses/MIT|MIT License}
  */
 
 var Utils = require('../../../renderer/webgl/Utils');
@@ -101,7 +101,14 @@ var BitmapTextWebGLRenderer = function (renderer, src, interpolationPercentage, 
     var lineOffsetX = 0;
 
     //  Update the bounds - skipped internally if not dirty
-    src.getTextBounds(false);
+    var bounds = src.getTextBounds(false);
+
+    //  In case the method above changed it (word wrapping)
+    if (src.maxWidth > 0)
+    {
+        text = bounds.wrappedText;
+        textLength = text.length;
+    }
 
     var lineData = src._bounds.lines;
 
@@ -203,20 +210,20 @@ var BitmapTextWebGLRenderer = function (renderer, src, interpolationPercentage, 
 
         if (roundPixels)
         {
-            tx0 |= 0;
-            ty0 |= 0;
+            tx0 = Math.round(tx0);
+            ty0 = Math.round(ty0);
 
-            tx1 |= 0;
-            ty1 |= 0;
+            tx1 = Math.round(tx1);
+            ty1 = Math.round(ty1);
 
-            tx2 |= 0;
-            ty2 |= 0;
+            tx2 = Math.round(tx2);
+            ty2 = Math.round(ty2);
 
-            tx3 |= 0;
-            ty3 |= 0;
+            tx3 = Math.round(tx3);
+            ty3 = Math.round(ty3);
         }
 
-        pipeline.batchQuad(tx0, ty0, tx1, ty1, tx2, ty2, tx3, ty3, u0, v0, u1, v1, tintTL, tintTR, tintBL, tintBR, tintEffect);
+        pipeline.batchQuad(tx0, ty0, tx1, ty1, tx2, ty2, tx3, ty3, u0, v0, u1, v1, tintTL, tintTR, tintBL, tintBR, tintEffect, texture, 0);
     }
 };
 

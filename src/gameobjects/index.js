@@ -1,7 +1,7 @@
 /**
  * @author       Richard Davey <rich@photonstorm.com>
- * @copyright    2018 Photon Storm Ltd.
- * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ * @copyright    2019 Photon Storm Ltd.
+ * @license      {@link https://opensource.org/licenses/MIT|MIT License}
  */
 
 /**
@@ -9,6 +9,8 @@
  */
 
 var GameObjects = {
+
+    Events: require('./events'),
 
     DisplayList: require('./DisplayList'),
     GameObjectCreator: require('./GameObjectCreator'),
@@ -23,7 +25,9 @@ var GameObjects = {
     BitmapText: require('./bitmaptext/static/BitmapText'),
     Blitter: require('./blitter/Blitter'),
     Container: require('./container/Container'),
+    DOMElement: require('./domelement/DOMElement'),
     DynamicBitmapText: require('./bitmaptext/dynamic/DynamicBitmapText'),
+    Extern: require('./extern/Extern.js'),
     Graphics: require('./graphics/Graphics.js'),
     Group: require('./group/Group'),
     Image: require('./image/Image'),
@@ -35,6 +39,7 @@ var GameObjects = {
     Text: require('./text/static/Text'),
     TileSprite: require('./tilesprite/TileSprite'),
     Zone: require('./zone/Zone'),
+    Video: require('./video/Video'),
 
     //  Shapes
 
@@ -56,7 +61,9 @@ var GameObjects = {
     Factories: {
         Blitter: require('./blitter/BlitterFactory'),
         Container: require('./container/ContainerFactory'),
+        DOMElement: require('./domelement/DOMElementFactory'),
         DynamicBitmapText: require('./bitmaptext/dynamic/DynamicBitmapTextFactory'),
+        Extern: require('./extern/ExternFactory'),
         Graphics: require('./graphics/GraphicsFactory'),
         Group: require('./group/GroupFactory'),
         Image: require('./image/ImageFactory'),
@@ -68,6 +75,7 @@ var GameObjects = {
         Text: require('./text/static/TextFactory'),
         TileSprite: require('./tilesprite/TileSpriteFactory'),
         Zone: require('./zone/ZoneFactory'),
+        Video: require('./video/VideoFactory'),
 
         //  Shapes
         Arc: require('./shape/arc/ArcFactory'),
@@ -96,28 +104,26 @@ var GameObjects = {
         StaticBitmapText: require('./bitmaptext/static/BitmapTextCreator'),
         Text: require('./text/static/TextCreator'),
         TileSprite: require('./tilesprite/TileSpriteCreator'),
-        Zone: require('./zone/ZoneCreator')
+        Zone: require('./zone/ZoneCreator'),
+        Video: require('./video/VideoCreator')
     }
 
 };
-
-if (typeof EXPERIMENTAL)
-{
-    GameObjects.DOMElement = require('./domelement/DOMElement');
-    GameObjects.Factories.DOMElement = require('./domelement/DOMElementFactory');
-}
 
 if (typeof WEBGL_RENDERER)
 {
     //  WebGL only Game Objects
     GameObjects.Mesh = require('./mesh/Mesh');
     GameObjects.Quad = require('./quad/Quad');
+    GameObjects.Shader = require('./shader/Shader');
 
     GameObjects.Factories.Mesh = require('./mesh/MeshFactory');
     GameObjects.Factories.Quad = require('./quad/QuadFactory');
+    GameObjects.Factories.Shader = require('./shader/ShaderFactory');
 
     GameObjects.Creators.Mesh = require('./mesh/MeshCreator');
     GameObjects.Creators.Quad = require('./quad/QuadCreator');
+    GameObjects.Creators.Shader = require('./shader/ShaderCreator');
 
     GameObjects.Light = require('./lights/Light');
 

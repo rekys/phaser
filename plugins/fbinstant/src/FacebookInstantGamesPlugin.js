@@ -279,7 +279,7 @@ var FacebookInstantGamesPlugin = new Class({
          * Contains all of the leaderboard data, as populated by the `getLeaderboard()` method.
          *
          * @name Phaser.FacebookInstantGamesPlugin#leaderboards
-         * @type {Phaser.FacebookInstantGamesPlugin.Leaderboard[]}
+         * @type {Phaser.FacebookInstantGamesLeaderboard[]}
          * @since 3.13.0
          */
         this.leaderboards = {};
@@ -387,7 +387,7 @@ var FacebookInstantGamesPlugin = new Class({
             {
                 this.hasLoaded = true;
 
-                FBInstant.startGameAsync().then(this.gameStarted.bind(this));
+                FBInstant.startGameAsync().then(this.gameStartedHandler.bind(this));
             }
             
         }, this);
@@ -408,6 +408,27 @@ var FacebookInstantGamesPlugin = new Class({
      * @since 3.13.0
      */
     gameStarted: function ()
+    {
+        if (!this.hasLoaded)
+        {
+            this.hasLoaded = true;
+
+            FBInstant.startGameAsync().then(this.gameStartedHandler.bind(this));
+        }
+        else
+        {
+            this.gameStartedHandler();
+        }
+    },
+
+    /**
+     * The internal gameStarted handler.
+     * 
+     * @method Phaser.FacebookInstantGamesPlugin#gameStartedHandler
+     * @private
+     * @since 3.20.0
+     */
+    gameStartedHandler: function ()
     {
         var APIs = FBInstant.getSupportedAPIs();
 
@@ -667,7 +688,7 @@ var FacebookInstantGamesPlugin = new Class({
      * 
      * ```javascript
      * this.facebook.loadPlayerPhoto(this, 'player').once('photocomplete', function (key) {
-     *   this.add.image(x, y, 'player);
+     *   this.add.image(x, y, 'player');
      * }, this);
      * ```
      *
@@ -687,7 +708,7 @@ var FacebookInstantGamesPlugin = new Class({
     
             scene.load.image(key, this.playerPhotoURL);
     
-            scene.load.once('filecomplete_image_' + key, function ()
+            scene.load.once('filecomplete-image-' + key, function ()
             {
                 this.emit('photocomplete', key);
 
@@ -1309,20 +1330,39 @@ var FacebookInstantGamesPlugin = new Class({
     },
 
     /**
+     * A filter that may be applied to a Context Choose operation.
+     * 
+     * 'NEW_CONTEXT_ONLY' - Prefer to only surface contexts the game has not been played in before.
+     * 'INCLUDE_EXISTING_CHALLENGES' - Include the "Existing Challenges" section, which surfaces actively played-in contexts that the player is a part of.
+     * 'NEW_PLAYERS_ONLY' - In sections containing individuals, prefer people who have not played the game.
+     * 
+     * @typedef {string} ContextFilter
+     */
+
+    /**
+     * A configuration object that may be applied to a Context Choose operation.
+     * 
+     * @typedef {object} ChooseContextConfig
+     * @property {ContextFilter[]} [filters] - The set of filters to apply to the context suggestions: 'NEW_CONTEXT_ONLY', 'INCLUDE_EXISTING_CHALLENGES' or 'NEW_PLAYERS_ONLY'.
+     * @property {number} [maxSize] - The maximum number of participants that a suggested context should ideally have.
+     * @property {number} [minSize] - The minimum number of participants that a suggested context should ideally have.
+     */
+
+    /**
      * Opens a context selection dialog for the player. If the player selects an available context,
      * the client will attempt to switch into that context, and emit the `choose` event if successful.
      * Otherwise, if the player exits the menu or the client fails to switch into the new context, the `choosefail` event will be emitted.
-     *
+     * 
      * @method Phaser.FacebookInstantGamesPlugin#chooseContext
      * @since 3.13.0
      * 
-     * @param {string} contextID - The ID of the desired context.
+     * @param {ChooseContextConfig} [options] - An object specifying conditions on the contexts that should be offered.
      * 
      * @return {this} This Facebook Instant Games Plugin instance.
      */
     chooseContext: function (options)
     {
-        if (!this.checkAPI('contextChoseAsync'))
+        if (!this.checkAPI('contextChooseAsync'))
         {
             return this;
         }
@@ -1461,6 +1501,33 @@ var FacebookInstantGamesPlugin = new Class({
     },
 
     /**
+     * Fetches a single Product from the game's product catalog.
+     * 
+     * The product catalog must have been populated using `getCatalog` prior to calling this method.
+     * 
+     * Use this to look-up product details based on a purchase list.
+     *
+     * @method Phaser.FacebookInstantGamesPlugin#getProduct
+     * @since 3.17.0
+     * 
+     * @param {string} productID - The Product ID of the item to get from the catalog.
+     * 
+     * @return {?Product} The Product from the catalog, or `null` if it couldn't be found or the catalog isn't populated.
+     */
+    getProduct: function (productID)
+    {
+        for (var i = 0; i < this.catalog.length; i++)
+        {
+            if (this.catalog[i].productID === productID)
+            {
+                return this.catalog[i];
+            }
+        }
+
+        return null;
+    },
+
+    /**
      * Begins the purchase flow for a specific product.
      * 
      * It makes an async call to the API, so the result isn't available immediately.
@@ -1569,14 +1636,14 @@ var FacebookInstantGamesPlugin = new Class({
      * If they cannot, i.e. it's not in the list of supported APIs, or the request
      * was rejected, it will emit a `consumepurchasefail` event instead.
      *
-     * @method Phaser.FacebookInstantGamesPlugin#consumePurchases
-     * @since 3.13.0
+     * @method Phaser.FacebookInstantGamesPlugin#consumePurchase
+     * @since 3.17.0
      * 
      * @param {string} purchaseToken - The purchase token of the purchase that should be consumed.
      * 
      * @return {this} This Facebook Instant Games Plugin instance.
      */
-    consumePurchases: function (purchaseToken)
+    consumePurchase: function (purchaseToken)
     {
         if (!this.paymentsReady)
         {
@@ -1600,7 +1667,7 @@ var FacebookInstantGamesPlugin = new Class({
     /**
      * Informs Facebook of a custom update that occurred in the game.
      * This will temporarily yield control to Facebook and Facebook will decide what to do based on what the update is.
-     * Once Facebook returns control to the game the plugin will emit an `update` or `upatefail` event.
+     * Once Facebook returns control to the game the plugin will emit an `update` or `updatefail` event.
      * 
      * It makes an async call to the API, so the result isn't available immediately.
      * 
@@ -1624,7 +1691,7 @@ var FacebookInstantGamesPlugin = new Class({
      * @param {string} cta - The call to action text.
      * @param {object} text - The text object.
      * @param {string} key - The key of the texture to use as the share image.
-     * @param {(string|integer)} [frame] - The frame of the texture to use as the share image. Set to `null` if you don't require a frame, but do need to set session data.
+     * @param {?(string|integer)} frame - The frame of the texture to use as the share image. Set to `null` if you don't require a frame, but do need to set session data.
      * @param {string} template - The update template key.
      * @param {object} updateData - The update data object payload.
      * 
@@ -1638,7 +1705,7 @@ var FacebookInstantGamesPlugin = new Class({
     /**
      * Informs Facebook of a leaderboard update that occurred in the game.
      * This will temporarily yield control to Facebook and Facebook will decide what to do based on what the update is.
-     * Once Facebook returns control to the game the plugin will emit an `update` or `upatefail` event.
+     * Once Facebook returns control to the game the plugin will emit an `update` or `updatefail` event.
      * 
      * It makes an async call to the API, so the result isn't available immediately.
      * 
@@ -1662,7 +1729,7 @@ var FacebookInstantGamesPlugin = new Class({
      * @param {string} cta - The call to action text.
      * @param {object} text - The text object.
      * @param {string} key - The key of the texture to use as the share image.
-     * @param {(string|integer)} [frame] - The frame of the texture to use as the share image. Set to `null` if you don't require a frame, but do need to set session data.
+     * @param {?(string|integer)} frame - The frame of the texture to use as the share image. Set to `null` if you don't require a frame, but do need to set session data.
      * @param {string} template - The update template key.
      * @param {object} updateData - The update data object payload.
      * 
@@ -1684,7 +1751,7 @@ var FacebookInstantGamesPlugin = new Class({
      * @param {string} cta - The call to action text.
      * @param {object} text - The text object.
      * @param {string} key - The key of the texture to use as the share image.
-     * @param {(string|integer)} [frame] - The frame of the texture to use as the share image. Set to `null` if you don't require a frame, but do need to set session data.
+     * @param {?(string|integer)} frame - The frame of the texture to use as the share image. Set to `null` if you don't require a frame, but do need to set session data.
      * @param {string} template - The update template key.
      * @param {object} updateData - The update data object payload.
      * 
@@ -1870,6 +1937,10 @@ var FacebookInstantGamesPlugin = new Class({
      * Attempt to create an instance of an interstitial ad.
      * 
      * If the instance is created successfully then the ad is preloaded ready for display in-game via the method `showAd()`.
+     * 
+     * If the ad loads it will emit the `adloaded` event, passing the AdInstance as the only parameter.
+     * 
+     * If the ad cannot be displayed because there was no inventory to fill it, it will emit the `adsnofill` event.
      *
      * @method Phaser.FacebookInstantGamesPlugin#preloadAds
      * @since 3.13.0
@@ -1912,18 +1983,36 @@ var FacebookInstantGamesPlugin = new Class({
         for (i = 0; i < placementID.length; i++)
         {
             var id = placementID[i];
+            var data;
 
-            FBInstant.getInterstitialAdAsync(id).then(function (data)
+            FBInstant.getInterstitialAdAsync(id).then(function (interstitial)
             {
-                var ad = AdInstance(data, true);
-    
+                data = interstitial;
+
+                return interstitial.loadAsync();
+
+            }).then(function ()
+            {
+                var ad = AdInstance(id, data, false);
+
                 _this.ads.push(ad);
-    
-                return ad.loadAsync();
-    
+
+                _this.emit('adloaded', ad);
+
             }).catch(function (e)
             {
-                console.warn(e);
+                if (e.code === 'ADS_NO_FILL')
+                {
+                    _this.emit('adsnofill', id);
+                }
+                else if (e.code === 'ADS_FREQUENT_LOAD')
+                {
+                    _this.emit('adsfrequentload', id);
+                }
+                else
+                {
+                    console.warn(e);
+                }
             });
         }
 
@@ -1931,9 +2020,13 @@ var FacebookInstantGamesPlugin = new Class({
     },
 
     /**
-     * Attempt to create an instance of an interstitial video ad.
+     * Attempt to create an instance of an rewarded video ad.
      * 
      * If the instance is created successfully then the ad is preloaded ready for display in-game via the method `showVideo()`.
+     * 
+     * If the ad loads it will emit the `adloaded` event, passing the AdInstance as the only parameter.
+     * 
+     * If the ad cannot be displayed because there was no inventory to fill it, it will emit the `adsnofill` event.
      *
      * @method Phaser.FacebookInstantGamesPlugin#preloadVideoAds
      * @since 3.13.0
@@ -1976,18 +2069,36 @@ var FacebookInstantGamesPlugin = new Class({
         for (i = 0; i < placementID.length; i++)
         {
             var id = placementID[i];
+            var data;
 
-            FBInstant.getRewardedVideoAsync(id).then(function (data)
+            FBInstant.getRewardedVideoAsync(id).then(function (reward)
             {
-                var ad = AdInstance(data, true);
-    
+                data = reward;
+
+                return reward.loadAsync();
+
+            }).then(function ()
+            {
+                var ad = AdInstance(id, data, true);
+
                 _this.ads.push(ad);
-    
-                return ad.loadAsync();
-    
+
+                _this.emit('adloaded', ad);
+
             }).catch(function (e)
             {
-                console.warn(e);
+                if (e.code === 'ADS_NO_FILL')
+                {
+                    _this.emit('adsnofill', id);
+                }
+                else if (e.code === 'ADS_FREQUENT_LOAD')
+                {
+                    _this.emit('adsfrequentload', id);
+                }
+                else
+                {
+                    console.warn(e);
+                }
             });
         }
 
@@ -1997,9 +2108,9 @@ var FacebookInstantGamesPlugin = new Class({
     /**
      * Displays a previously loaded interstitial ad.
      * 
-     * If the ad is successfully displayed this plugin will emit the `showad` event, with the AdInstance object as its parameter.
+     * If the ad is successfully displayed this plugin will emit the `adfinished` event, with the AdInstance object as its parameter.
      * 
-     * If the ad cannot be displayed because there was no inventory to fill it, it will emit the `adsnofill` event.
+     * If the ad cannot be displayed, it will emit the `adsnotloaded` event.
      *
      * @method Phaser.FacebookInstantGamesPlugin#showAd
      * @since 3.13.0
@@ -2016,24 +2127,26 @@ var FacebookInstantGamesPlugin = new Class({
         {
             var ad = this.ads[i];
 
-            if (ad.placementID === placementID)
+            if (ad.placementID === placementID && !ad.shown)
             {
                 ad.instance.showAsync().then(function ()
                 {
                     ad.shown = true;
 
-                    _this.emit('showad', ad);
+                    _this.emit('adfinished', ad);
 
                 }).catch(function (e)
                 {
-                    if (e.code === 'ADS_NO_FILL')
+                    if (e.code === 'ADS_NOT_LOADED')
                     {
-                        _this.emit('adsnofill');
+                        _this.emit('adsnotloaded', ad);
                     }
-                    else
+                    else if (e.code === 'RATE_LIMITED')
                     {
-                        console.warn(e);
+                        _this.emit('adratelimited', ad);
                     }
+                    
+                    _this.emit('adshowerror', e, ad);
                 });
             }
         }
@@ -2044,9 +2157,9 @@ var FacebookInstantGamesPlugin = new Class({
     /**
      * Displays a previously loaded interstitial video ad.
      * 
-     * If the ad is successfully displayed this plugin will emit the `showad` event, with the AdInstance object as its parameter.
+     * If the ad is successfully displayed this plugin will emit the `adfinished` event, with the AdInstance object as its parameter.
      * 
-     * If the ad cannot be displayed because there was no inventory to fill it, it will emit the `adsnofill` event.
+     * If the ad cannot be displayed, it will emit the `adsnotloaded` event.
      *
      * @method Phaser.FacebookInstantGamesPlugin#showVideo
      * @since 3.13.0
@@ -2063,24 +2176,26 @@ var FacebookInstantGamesPlugin = new Class({
         {
             var ad = this.ads[i];
 
-            if (ad.placementID === placementID && ad.video)
+            if (ad.placementID === placementID && ad.video && !ad.shown)
             {
                 ad.instance.showAsync().then(function ()
                 {
                     ad.shown = true;
 
-                    _this.emit('showad', ad);
+                    _this.emit('adfinished', ad);
 
                 }).catch(function (e)
                 {
-                    if (e.code === 'ADS_NO_FILL')
+                    if (e.code === 'ADS_NOT_LOADED')
                     {
-                        _this.emit('adsnofill');
+                        _this.emit('adsnotloaded', ad);
                     }
-                    else
+                    else if (e.code === 'RATE_LIMITED')
                     {
-                        console.warn(e);
+                        _this.emit('adratelimited', ad);
                     }
+                    
+                    _this.emit('adshowerror', e, ad);
                 });
             }
         }

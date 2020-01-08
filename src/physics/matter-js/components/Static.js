@@ -1,26 +1,26 @@
 /**
  * @author       Richard Davey <rich@photonstorm.com>
- * @copyright    2018 Photon Storm Ltd.
- * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ * @copyright    2019 Photon Storm Ltd.
+ * @license      {@link https://opensource.org/licenses/MIT|MIT License}
  */
 
 var Body = require('../lib/body/Body');
 
 /**
- * [description]
+ * Provides methods used for getting and setting the static state of a physics body.
  *
- * @name Phaser.Physics.Matter.Components.Static
+ * @namespace Phaser.Physics.Matter.Components.Static
  * @since 3.0.0
  */
 var Static = {
 
     /**
-     * [description]
+     * Changes the physics body to be either static `true` or dynamic `false`.
      *
      * @method Phaser.Physics.Matter.Components.Static#setStatic
      * @since 3.0.0
      *
-     * @param {boolean} value - [description]
+     * @param {boolean} value - `true` to set the body as being static, or `false` to make it dynamic.
      *
      * @return {Phaser.GameObjects.GameObject} This Game Object.
      */
@@ -32,12 +32,12 @@ var Static = {
     },
 
     /**
-     * [description]
+     * Returns `true` if the body is static, otherwise `false` for a dynamic body.
      *
      * @method Phaser.Physics.Matter.Components.Static#isStatic
      * @since 3.0.0
      *
-     * @return {boolean} [description]
+     * @return {boolean} `true` if the body is static, otherwise `false`.
      */
     isStatic: function ()
     {

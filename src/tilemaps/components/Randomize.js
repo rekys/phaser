@@ -1,7 +1,7 @@
 /**
  * @author       Richard Davey <rich@photonstorm.com>
- * @copyright    2018 Photon Storm Ltd.
- * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ * @copyright    2019 Photon Storm Ltd.
+ * @license      {@link https://opensource.org/licenses/MIT|MIT License}
  */
 
 var GetTilesWithin = require('./GetTilesWithin');
@@ -30,7 +30,7 @@ var Randomize = function (tileX, tileY, width, height, indexes, layer)
     var i;
     var tiles = GetTilesWithin(tileX, tileY, width, height, null, layer);
 
-    // If no indicies are given, then find all the unique indexes within the specified region
+    // If no indices are given, then find all the unique indexes within the specified region
     if (indexes === undefined)
     {
         indexes = [];

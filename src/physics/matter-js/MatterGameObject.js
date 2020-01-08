@@ -1,7 +1,7 @@
 /**
  * @author       Richard Davey <rich@photonstorm.com>
- * @copyright    2018 Photon Storm Ltd.
- * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ * @copyright    2019 Photon Storm Ltd.
+ * @license      {@link https://opensource.org/licenses/MIT|MIT License}
  */
 
 var Components = require('./components');
@@ -24,20 +24,26 @@ function hasGetterOrSetter (def)
 }
 
 /**
- * [description]
+ * A Matter Game Object is a generic object that allows you to combine any Phaser Game Object,
+ * including those you have extended or created yourself, with all of the Matter Components.
+ * 
+ * This enables you to use component methods such as `setVelocity` or `isSensor` directly from
+ * this Game Object.
  *
  * @function Phaser.Physics.Matter.MatterGameObject
  * @since 3.3.0
  *
  * @param {Phaser.Physics.Matter.World} world - The Matter world to add the body to.
  * @param {Phaser.GameObjects.GameObject} gameObject - The Game Object that will have the Matter body applied to it.
- * @param {object} options - Matter options config object.
+ * @param {(Phaser.Types.Physics.Matter.MatterBodyConfig|MatterJS.Body)} [options] - A Matter Body configuration object, or an instance of a Matter Body.
+ * @param {boolean} [addToWorld=true] - Should the newly created body be immediately added to the World?
  *
  * @return {Phaser.GameObjects.GameObject} The Game Object that was created with the Matter body.
  */
-var MatterGameObject = function (world, gameObject, options)
+var MatterGameObject = function (world, gameObject, options, addToWorld)
 {
     if (options === undefined) { options = {}; }
+    if (addToWorld === undefined) { addToWorld = true; }
 
     var x = gameObject.x;
     var y = gameObject.y;
@@ -90,14 +96,23 @@ var MatterGameObject = function (world, gameObject, options)
 
     gameObject._tempVec2 = new Vector2(x, y);
 
-    var shape = GetFastValue(options, 'shape', null);
-
-    if (!shape)
+    if (options.hasOwnProperty('type') && options.type === 'body')
     {
-        shape = 'rectangle';
+        gameObject.setExistingBody(options, addToWorld);
     }
+    else
+    {
+        var shape = GetFastValue(options, 'shape', null);
 
-    gameObject.setBody(shape, options);
+        if (!shape)
+        {
+            shape = 'rectangle';
+        }
+
+        options.addToWorld = addToWorld;
+    
+        gameObject.setBody(shape, options);
+    }
 
     return gameObject;
 };
