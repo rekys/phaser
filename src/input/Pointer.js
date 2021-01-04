@@ -10,6 +10,7 @@ var Distance = require('../math/distance/DistanceBetween');
 var FuzzyEqual = require('../math/fuzzy/Equal');
 var SmoothStepInterpolation = require('../math/interpolation/SmoothStepInterpolation');
 var Vector2 = require('../math/Vector2');
+var OS = require('../device/OS');
 
 /**
  * @classdesc
@@ -32,7 +33,7 @@ var Vector2 = require('../math/Vector2');
  * @since 3.0.0
  *
  * @param {Phaser.Input.InputManager} manager - A reference to the Input Manager.
- * @param {integer} id - The internal ID of this Pointer.
+ * @param {number} id - The internal ID of this Pointer.
  */
 var Pointer = new Class({
 
@@ -53,7 +54,7 @@ var Pointer = new Class({
          * The internal ID of this Pointer.
          *
          * @name Phaser.Input.Pointer#id
-         * @type {integer}
+         * @type {number}
          * @readonly
          * @since 3.0.0
          */
@@ -114,7 +115,7 @@ var Pointer = new Class({
          * however, it should behave as if the left button was clicked in the standard button layout.
          *
          * @name Phaser.Input.Pointer#button
-         * @type {integer}
+         * @type {number}
          * @readonly
          * @default 0
          * @since 3.18.0
@@ -133,7 +134,7 @@ var Pointer = new Class({
          * In this case, the values are read from right to left.
          *
          * @name Phaser.Input.Pointer#buttons
-         * @type {integer}
+         * @type {number}
          * @default 0
          * @since 3.0.0
          */
@@ -508,17 +509,8 @@ var Pointer = new Class({
      */
     updateWorldPoint: function (camera)
     {
-        var x = this.x;
-        var y = this.y;
-
-        if (camera.resolution !== 1)
-        {
-            x += camera._x;
-            y += camera._y;
-        }
-
         //  Stores the world point inside of tempPoint
-        var temp = camera.getWorldPoint(x, y);
+        var temp = camera.getWorldPoint(this.x, this.y);
 
         this.worldX = temp.x;
         this.worldY = temp.y;
@@ -666,6 +658,13 @@ var Pointer = new Class({
             this.primaryDown = true;
             this.downX = this.x;
             this.downY = this.y;
+        }
+
+        if (OS.macOS && event.ctrlKey)
+        {
+            //  Override button settings on macOS
+            this.buttons = 2;
+            this.primaryDown = false;
         }
 
         if (!this.isDown)
@@ -1172,7 +1171,7 @@ var Pointer = new Class({
      * @method Phaser.Input.Pointer#getInterpolatedPosition
      * @since 3.11.0
      *
-     * @param {integer} [steps=10] - The number of interpolation steps to use.
+     * @param {number} [steps=10] - The number of interpolation steps to use.
      * @param {array} [out] - An array to store the results in. If not provided a new one will be created.
      *
      * @return {array} An array of interpolated values.

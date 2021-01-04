@@ -9,25 +9,21 @@ varying float outTexId;
 varying float outTintEffect;
 varying vec4 outTint;
 
-void main()
+void main ()
 {
     vec4 texture;
 
     %forloop%
 
-    vec4 texel = vec4(outTint.rgb * outTint.a, outTint.a);
-    vec4 color = texture;
+    vec4 texel = vec4(outTint.bgr * outTint.a, outTint.a);
 
-    if (outTintEffect == 0.0)
-    {
-        //  Multiply texture tint
-        color = texture * texel;
-    }
-    else if (outTintEffect == 1.0)
+    //  Multiply texture tint
+    vec4 color = texture * texel;
+
+    if (outTintEffect == 1.0)
     {
         //  Solid color + texture alpha
-        color.rgb = mix(texture.rgb, outTint.rgb * outTint.a, texture.a);
-        color.a = texture.a * texel.a;
+        color.rgb = mix(texture.rgb, outTint.bgr * outTint.a, texture.a);
     }
     else if (outTintEffect == 2.0)
     {

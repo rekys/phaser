@@ -242,17 +242,37 @@ var SpineGameObject = new Class({
     },
 
     /**
-     * Overrides the default Game Object method and always returns true.
-     * Rendering is decided in the renderer functions.
+     * Returns `true` if this Spine Game Object both has a skeleton and
+     * also passes the render tests for the given Camera.
      *
      * @method SpineGameObject#willRender
      * @since 3.19.0
      *
-     * @return {boolean} Always returns `true`.
+     * @param {Phaser.Cameras.Scene2D.Camera} camera - The Camera that is rendering the Game Object.
+     * @param {SpineContainer} [container] - If this Spine object is in a Spine Container, this is a reference to it.
+     *
+     * @return {boolean} `true` if this Game Object should be rendered, otherwise `false`.
      */
-    willRender: function ()
+    willRender: function (camera, container)
     {
-        return true;
+        var GameObjectRenderMask = 15;
+
+        var result = (!this.skeleton || !(GameObjectRenderMask !== this.renderFlags || (this.cameraFilter !== 0 && (this.cameraFilter & camera.id))));
+
+        if (!container && !result && this.parentContainer)
+        {
+            var plugin = this.plugin;
+            var sceneRenderer = plugin.sceneRenderer;
+
+            if (plugin.gl && sceneRenderer.batcher.isDrawing)
+            {
+                sceneRenderer.end();
+
+                plugin.renderer.pipelines.rebind();
+            }
+        }
+
+        return result;
     },
 
     /**
@@ -1037,6 +1057,9 @@ var SpineGameObject = new Class({
      */
     addAnimation: function (trackIndex, animationName, loop, delay)
     {
+        if (loop === undefined) { loop = false; }
+        if (delay === undefined) { delay = 0; }
+
         return this.state.addAnimation(trackIndex, animationName, loop, delay);
     },
 

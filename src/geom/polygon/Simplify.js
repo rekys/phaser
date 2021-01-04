@@ -29,8 +29,6 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-'use strict';
-
 /**
  * @ignore
  */
@@ -183,19 +181,17 @@ var Simplify = function (polygon, tolerance, highestQuality)
 
     var points = polygon.points;
 
-    if (points.length <= 2)
+    if (points.length > 2)
     {
-        return points;
+        var sqTolerance = tolerance * tolerance;
+
+        if (!highestQuality)
+        {
+            points = simplifyRadialDist(points, sqTolerance);
+        }
+
+        polygon.setTo(simplifyDouglasPeucker(points, sqTolerance));
     }
-
-    var sqTolerance = tolerance * tolerance;
-
-    if (!highestQuality)
-    {
-        points = simplifyRadialDist(points, sqTolerance);
-    }
-
-    polygon.setTo(simplifyDouglasPeucker(points, sqTolerance));
 
     return polygon;
 };

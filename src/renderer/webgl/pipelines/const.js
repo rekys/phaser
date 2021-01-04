@@ -27,6 +27,16 @@ var PIPELINE_CONST = {
     LIGHT_PIPELINE: 'Light2D',
 
     /**
+     * The Point Light Pipeline.
+     *
+     * @name Phaser.Renderer.WebGL.Pipelines.POINTLIGHT_PIPELINE
+     * @type {string}
+     * @const
+     * @since 3.50.0
+     */
+    POINTLIGHT_PIPELINE: 'PointLightPipeline',
+
+    /**
      * The Single Texture Pipeline.
      *
      * @name Phaser.Renderer.WebGL.Pipelines.SINGLE_PIPELINE
@@ -54,8 +64,37 @@ var PIPELINE_CONST = {
      * @const
      * @since 3.50.0
      */
-    ROPE_PIPELINE: 'RopePipeline'
+    ROPE_PIPELINE: 'RopePipeline',
 
+    /**
+     * The Graphics and Shapes Pipeline.
+     *
+     * @name Phaser.Renderer.WebGL.Pipelines.GRAPHICS_PIPELINE
+     * @type {string}
+     * @const
+     * @since 3.50.0
+     */
+    GRAPHICS_PIPELINE: 'GraphicsPipeline',
+
+    /**
+     * The Post FX Pipeline.
+     *
+     * @name Phaser.Renderer.WebGL.Pipelines.POSTFX_PIPELINE
+     * @type {string}
+     * @const
+     * @since 3.50.0
+     */
+    POSTFX_PIPELINE: 'PostFXPipeline',
+
+    /**
+     * The Utility Pipeline.
+     *
+     * @name Phaser.Renderer.WebGL.Pipelines.UTILITY_PIPELINE
+     * @type {string}
+     * @const
+     * @since 3.50.0
+     */
+    UTILITY_PIPELINE: 'UtilityPipeline'
 };
 
 module.exports = PIPELINE_CONST;

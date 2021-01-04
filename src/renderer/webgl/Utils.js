@@ -10,6 +10,7 @@
  * Generate shader source to test maximum ifs.
  *
  * @private
+ * @ignore
  * @param {number} maxIfs - The number of if statements to generate
  */
 function GenerateSrc (maxIfs)
@@ -53,10 +54,10 @@ module.exports = {
      */
     getTintFromFloats: function (r, g, b, a)
     {
-        var ur = ((r * 255.0)|0) & 0xFF;
-        var ug = ((g * 255.0)|0) & 0xFF;
-        var ub = ((b * 255.0)|0) & 0xFF;
-        var ua = ((a * 255.0)|0) & 0xFF;
+        var ur = ((r * 255) | 0) & 0xff;
+        var ug = ((g * 255) | 0) & 0xff;
+        var ub = ((b * 255) | 0) & 0xff;
+        var ua = ((a * 255) | 0) & 0xff;
 
         return ((ua << 24) | (ur << 16) | (ug << 8) | ub) >>> 0;
     },
@@ -75,7 +76,8 @@ module.exports = {
      */
     getTintAppendFloatAlpha: function (rgb, a)
     {
-        var ua = ((a * 255.0)|0) & 0xFF;
+        var ua = ((a * 255) | 0) & 0xff;
+
         return ((ua << 24) | rgb) >>> 0;
     },
 
@@ -94,10 +96,10 @@ module.exports = {
      */
     getTintAppendFloatAlphaAndSwap: function (rgb, a)
     {
-        var ur = ((rgb >> 16)|0) & 0xff;
-        var ug = ((rgb >> 8)|0) & 0xff;
-        var ub = (rgb|0) & 0xff;
-        var ua = ((a * 255.0)|0) & 0xFF;
+        var ur = ((rgb >> 16) | 0) & 0xff;
+        var ug = ((rgb >> 8) | 0) & 0xff;
+        var ub = (rgb | 0) & 0xff;
+        var ua = ((a * 255) | 0) & 0xff;
 
         return ((ua << 24) | (ub << 16) | (ug << 8) | ur) >>> 0;
     },
@@ -114,43 +116,11 @@ module.exports = {
      */
     getFloatsFromUintRGB: function (rgb)
     {
-        var ur = ((rgb >> 16)|0) & 0xff;
-        var ug = ((rgb >> 8)|0) & 0xff;
-        var ub = (rgb|0) & 0xff;
+        var ur = ((rgb >> 16) | 0) & 0xff;
+        var ug = ((rgb >> 8) | 0) & 0xff;
+        var ub = (rgb | 0) & 0xff;
 
-        return [ ur / 255.0, ug / 255.0, ub / 255.0 ];
-    },
-
-    /**
-     * Counts how many attributes of 32 bits a vertex has
-     *
-     * @function Phaser.Renderer.WebGL.Utils.getComponentCount
-     * @since 3.0.0
-     *
-     * @param {array} attributes - Array of attributes
-     * @param {WebGLRenderingContext} glContext - WebGLContext used for check types
-     *
-     * @return {number} Count of 32 bit attributes in vertex
-     */
-    getComponentCount: function (attributes, glContext)
-    {
-        var count = 0;
-
-        for (var index = 0; index < attributes.length; ++index)
-        {
-            var element = attributes[index];
-
-            if (element.type === glContext.FLOAT)
-            {
-                count += element.size;
-            }
-            else
-            {
-                count += 1; // We'll force any other type to be 32 bit. for now
-            }
-        }
-
-        return count;
+        return [ ur / 255, ug / 255, ub / 255 ];
     },
 
     /**
@@ -219,6 +189,11 @@ module.exports = {
      */
     parseFragmentShaderMaxTextures: function (fragmentShaderSource, maxTextures)
     {
+        if (!fragmentShaderSource)
+        {
+            return '';
+        }
+
         var src = '';
 
         for (var i = 0; i < maxTextures; i++)

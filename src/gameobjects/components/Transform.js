@@ -206,7 +206,7 @@ var Transform = {
      * If you prefer to work in radians, see the `rotation` property instead.
      *
      * @name Phaser.GameObjects.Components.Transform#angle
-     * @type {integer}
+     * @type {number}
      * @default 0
      * @since 3.0.0
      */
@@ -275,6 +275,26 @@ var Transform = {
         this.y = y;
         this.z = z;
         this.w = w;
+
+        return this;
+    },
+
+    /**
+     * Copies an object's coordinates to this Game Object's position.
+     *
+     * @method Phaser.GameObjects.Components.Transform#copyPosition
+     * @since 3.50.0
+     *
+     * @param {(Phaser.Types.Math.Vector2Like|Phaser.Types.Math.Vector3Like|Phaser.Types.Math.Vector4Like)} source - An object with numeric 'x', 'y', 'z', or 'w' properties. Undefined values are not copied.
+     *
+     * @return {this} This Game Object instance.
+     */
+    copyPosition: function (source)
+    {
+        if (source.x !== undefined) { this.x = source.x; }
+        if (source.y !== undefined) { this.y = source.y; }
+        if (source.z !== undefined) { this.z = source.z; }
+        if (source.w !== undefined) { this.w = source.w; }
 
         return this;
     },

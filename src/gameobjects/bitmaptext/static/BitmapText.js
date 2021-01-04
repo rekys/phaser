@@ -8,7 +8,6 @@ var Class = require('../../../utils/Class');
 var Clamp = require('../../../math/Clamp');
 var Components = require('../../components');
 var GameObject = require('../../GameObject');
-var GetColorFromValue = require('../../../display/color/GetColorFromValue');
 var GetBitmapTextSize = require('../GetBitmapTextSize');
 var ParseFromAtlas = require('../ParseFromAtlas');
 var ParseXMLBitmapFont = require('../ParseXMLBitmapFont');
@@ -61,7 +60,7 @@ var Render = require('./BitmapTextRender');
  * @param {string} font - The key of the font to use from the Bitmap Font cache.
  * @param {(string|string[])} [text] - The string, or array of strings, to be set as the content of this Bitmap Text.
  * @param {number} [size] - The font size of this Bitmap Text.
- * @param {integer} [align=0] - The alignment of the text in a multi-line BitmapText object.
+ * @param {number} [align=0] - The alignment of the text in a multi-line BitmapText object.
  */
 var BitmapText = new Class({
 
@@ -165,7 +164,7 @@ var BitmapText = new Class({
          * The alignment position is based on the longest line of text.
          *
          * @name Phaser.GameObjects.BitmapText#_align
-         * @type {integer}
+         * @type {number}
          * @private
          * @since 3.11.0
          */
@@ -246,22 +245,13 @@ var BitmapText = new Class({
         /**
          * The color of the drop shadow.
          *
-         * @name Phaser.GameObjects.BitmapText#_dropShadowColor
-         * @type {number}
-         * @private
-         * @since 3.50.0
-         */
-        this._dropShadowColor = 0x000000;
-
-        /**
-         * The GL encoded color of the drop shadow.
+         * You can set this directly, or use `Phaser.GameObjects.BitmapText#setDropShadow`.
          *
-         * @name Phaser.GameObjects.BitmapText#_dropShadowColorGL
+         * @name Phaser.GameObjects.BitmapText#dropShadowColor
          * @type {number}
-         * @private
          * @since 3.50.0
          */
-        this._dropShadowColorGL = 0x000000;
+        this.dropShadowColor = 0x000000;
 
         /**
          * The alpha value of the drop shadow.
@@ -432,7 +422,7 @@ var BitmapText = new Class({
      *
      * @param {number} [x=0] - The horizontal offset of the drop shadow.
      * @param {number} [y=0] - The vertical offset of the drop shadow.
-     * @param {number} [color=0xffffff] - The color of the drop shadow, given as a hex value, i.e. `0x000000` for black.
+     * @param {number} [color=0x000000] - The color of the drop shadow, given as a hex value, i.e. `0x000000` for black.
      * @param {number} [alpha=0.5] - The alpha of the drop shadow, given as a float between 0 and 1. This is combined with the Bitmap Text alpha as well.
      *
      * @return {this} This BitmapText Object.
@@ -446,8 +436,8 @@ var BitmapText = new Class({
 
         this.dropShadowX = x;
         this.dropShadowY = y;
-        this.dropShadowAlpha = alpha;
         this.dropShadowColor = color;
+        this.dropShadowAlpha = alpha;
 
         return this;
     },
@@ -486,10 +476,10 @@ var BitmapText = new Class({
      * @param {number} [start=0] - The starting character to begin the tint at. If negative, it counts back from the end of the text.
      * @param {number} [length=1] - The number of characters to tint. Remember that spaces count as a character too. Pass -1 to tint all characters from `start` onwards.
      * @param {boolean} [tintFill=false] - Use a fill-based tint (true), or an additive tint (false)
-     * @param {integer} [topLeft=0xffffff] - The tint being applied to the top-left of the character. If not other values are given this value is applied evenly, tinting the whole character.
-     * @param {integer} [topRight] - The tint being applied to the top-right of the character.
-     * @param {integer} [bottomLeft] - The tint being applied to the bottom-left of the character.
-     * @param {integer} [bottomRight] - The tint being applied to the bottom-right of the character.
+     * @param {number} [topLeft=0xffffff] - The tint being applied to the top-left of the character. If not other values are given this value is applied evenly, tinting the whole character.
+     * @param {number} [topRight] - The tint being applied to the top-right of the character.
+     * @param {number} [bottomLeft] - The tint being applied to the bottom-left of the character.
+     * @param {number} [bottomRight] - The tint being applied to the bottom-right of the character.
      *
      * @return {this} This BitmapText Object.
      */
@@ -536,27 +526,23 @@ var BitmapText = new Class({
             else
             {
                 var tintEffect = (tintFill) ? 1 : 0;
-                var tintTL = GetColorFromValue(topLeft);
-                var tintTR = GetColorFromValue(topRight);
-                var tintBL = GetColorFromValue(bottomLeft);
-                var tintBR = GetColorFromValue(bottomRight);
 
                 if (color)
                 {
                     color.tintEffect = tintEffect;
-                    color.tintTL = tintTL;
-                    color.tintTR = tintTR;
-                    color.tintBL = tintBL;
-                    color.tintBR = tintBR;
+                    color.tintTL = topLeft;
+                    color.tintTR = topRight;
+                    color.tintBL = bottomLeft;
+                    color.tintBR = bottomRight;
                 }
                 else
                 {
                     charColors[i] = {
                         tintEffect: tintEffect,
-                        tintTL: tintTL,
-                        tintTR: tintTR,
-                        tintBL: tintBL,
-                        tintBR: tintBR
+                        tintTL: topLeft,
+                        tintTR: topRight,
+                        tintBL: bottomLeft,
+                        tintBR: bottomRight
                     };
                 }
             }
@@ -599,10 +585,10 @@ var BitmapText = new Class({
      * @param {(string|number)} word - The word to search for. Either a string, or an index of the word in the words array.
      * @param {number} [count=1] - The number of matching words to tint. Pass -1 to tint all matching words.
      * @param {boolean} [tintFill=false] - Use a fill-based tint (true), or an additive tint (false)
-     * @param {integer} [topLeft=0xffffff] - The tint being applied to the top-left of the word. If not other values are given this value is applied evenly, tinting the whole word.
-     * @param {integer} [topRight] - The tint being applied to the top-right of the word.
-     * @param {integer} [bottomLeft] - The tint being applied to the bottom-left of the word.
-     * @param {integer} [bottomRight] - The tint being applied to the bottom-right of the word.
+     * @param {number} [topLeft=0xffffff] - The tint being applied to the top-left of the word. If not other values are given this value is applied evenly, tinting the whole word.
+     * @param {number} [topRight] - The tint being applied to the top-right of the word.
+     * @param {number} [bottomLeft] - The tint being applied to the bottom-left of the word.
+     * @param {number} [bottomRight] - The tint being applied to the bottom-right of the word.
      *
      * @return {this} This BitmapText Object.
      */
@@ -753,7 +739,7 @@ var BitmapText = new Class({
      *
      * @param {string} font - The key of the font to use from the Bitmap Font cache.
      * @param {number} [size] - The font size of this Bitmap Text. If not specified the current size will be used.
-     * @param {integer} [align=0] - The alignment of the text in a multi-line BitmapText object. If not specified the current alignment will be used.
+     * @param {number} [align=0] - The alignment of the text in a multi-line BitmapText object. If not specified the current alignment will be used.
      *
      * @return {this} This BitmapText Object.
      */
@@ -831,7 +817,7 @@ var BitmapText = new Class({
      * The alignment position is based on the longest line of text.
      *
      * @name Phaser.GameObjects.BitmapText#align
-     * @type {integer}
+     * @type {number}
      * @since 3.11.0
      */
     align: {
@@ -990,31 +976,6 @@ var BitmapText = new Class({
     },
 
     /**
-     * The color of the drop shadow.
-     *
-     * You can also set this via `Phaser.GameObjects.BitmapText#setDropShadow`.
-     *
-     * @name Phaser.GameObjects.BitmapText#dropShadowColor
-     * @type {number}
-     * @since 3.50.0
-     */
-    dropShadowColor: {
-
-        get: function ()
-        {
-            return this._dropShadowColor;
-        },
-
-        set: function (value)
-        {
-            this._dropShadowColor = value;
-
-            this._dropShadowColorGL = GetColorFromValue(value);
-        }
-
-    },
-
-    /**
      * Build a JSON representation of this Bitmap Text.
      *
      * @method Phaser.GameObjects.BitmapText#toJSON
@@ -1061,7 +1022,7 @@ var BitmapText = new Class({
  * Left align the text characters in a multi-line BitmapText object.
  *
  * @name Phaser.GameObjects.BitmapText.ALIGN_LEFT
- * @type {integer}
+ * @type {number}
  * @since 3.11.0
  */
 BitmapText.ALIGN_LEFT = 0;
@@ -1070,7 +1031,7 @@ BitmapText.ALIGN_LEFT = 0;
  * Center align the text characters in a multi-line BitmapText object.
  *
  * @name Phaser.GameObjects.BitmapText.ALIGN_CENTER
- * @type {integer}
+ * @type {number}
  * @since 3.11.0
  */
 BitmapText.ALIGN_CENTER = 1;
@@ -1079,7 +1040,7 @@ BitmapText.ALIGN_CENTER = 1;
  * Right align the text characters in a multi-line BitmapText object.
  *
  * @name Phaser.GameObjects.BitmapText.ALIGN_RIGHT
- * @type {integer}
+ * @type {number}
  * @since 3.11.0
  */
 BitmapText.ALIGN_RIGHT = 2;
@@ -1097,8 +1058,8 @@ BitmapText.ALIGN_RIGHT = 2;
  * @param {string} textureKey - The key of the BitmapFont's texture.
  * @param {string} frameKey - The key of the BitmapFont texture's frame.
  * @param {string} xmlKey - The key of the XML data of the font to parse.
- * @param {integer} [xSpacing] - The x-axis spacing to add between each letter.
- * @param {integer} [ySpacing] - The y-axis spacing to add to the line height.
+ * @param {number} [xSpacing] - The x-axis spacing to add between each letter.
+ * @param {number} [ySpacing] - The y-axis spacing to add to the line height.
  *
  * @return {boolean} Whether the parsing was successful or not.
  */
@@ -1112,8 +1073,8 @@ BitmapText.ParseFromAtlas = ParseFromAtlas;
  *
  * @param {XMLDocument} xml - The XML Document to parse the font from.
  * @param {Phaser.Textures.Frame} frame - The texture frame to take into account when creating the uv data.
- * @param {integer} [xSpacing=0] - The x-axis spacing to add between each letter.
- * @param {integer} [ySpacing=0] - The y-axis spacing to add to the line height.
+ * @param {number} [xSpacing=0] - The x-axis spacing to add between each letter.
+ * @param {number} [ySpacing=0] - The y-axis spacing to add to the line height.
  *
  * @return {Phaser.Types.GameObjects.BitmapText.BitmapFontData} The parsed Bitmap Font data.
  */

@@ -8,7 +8,6 @@ var AnimationState = require('../../animations/AnimationState');
 var Class = require('../../utils/Class');
 var Components = require('../components');
 var GameObject = require('../GameObject');
-var GameObjectEvents = require('../events');
 var SpriteRender = require('./SpriteRender');
 
 /**
@@ -48,7 +47,7 @@ var SpriteRender = require('./SpriteRender');
  * @param {number} x - The horizontal position of this Game Object in the world.
  * @param {number} y - The vertical position of this Game Object in the world.
  * @param {(string|Phaser.Textures.Texture)} texture - The key, or instance of the Texture this Game Object will use to render with, as stored in the Texture Manager.
- * @param {(string|integer)} [frame] - An optional frame from the Texture this Game Object is rendering with.
+ * @param {(string|number)} [frame] - An optional frame from the Texture this Game Object is rendering with.
  */
 var Sprite = new Class({
 
@@ -106,9 +105,6 @@ var Sprite = new Class({
         this.setSizeToFrame();
         this.setOriginFromFrame();
         this.initPipeline();
-
-        this.on(GameObjectEvents.ADDED_TO_SCENE, this.addedToScene, this);
-        this.on(GameObjectEvents.REMOVED_FROM_SCENE, this.removedFromScene, this);
     },
 
     //  Overrides Game Object method
@@ -284,12 +280,12 @@ var Sprite = new Class({
      *
      * Prior to Phaser 3.50 this method was called 'delayedPlay'.
      *
-     * @method Phaser.GameObjects.Components.Animation#playAfterDelay
+     * @method Phaser.GameObjects.Sprite#playAfterDelay
      * @fires Phaser.Animations.Events#ANIMATION_START
      * @since 3.50.0
      *
      * @param {(string|Phaser.Animations.Animation|Phaser.Types.Animations.PlayAnimationConfig)} key - The string-based key of the animation to play, or an Animation instance, or a `PlayAnimationConfig` object.
-     * @param {integer} delay - The delay, in milliseconds, to wait before starting the animation playing.
+     * @param {number} delay - The delay, in milliseconds, to wait before starting the animation playing.
      *
      * @return {this} This Game Object.
      */
@@ -311,12 +307,12 @@ var Sprite = new Class({
      * locally within the Sprite. If it can, it will play the local animation. If not, it will then
      * search the global Animation Manager and look for it there.
      *
-     * @method Phaser.GameObjects.Components.Animation#playAfterRepeat
+     * @method Phaser.GameObjects.Sprite#playAfterRepeat
      * @fires Phaser.Animations.Events#ANIMATION_START
      * @since 3.50.0
      *
      * @param {(string|Phaser.Animations.Animation|Phaser.Types.Animations.PlayAnimationConfig)} key - The string-based key of the animation to play, or an Animation instance, or a `PlayAnimationConfig` object.
-     * @param {integer} [repeatCount=1] - How many times should the animation repeat before the next one starts?
+     * @param {number} [repeatCount=1] - How many times should the animation repeat before the next one starts?
      *
      * @return {this} This Game Object.
      */
@@ -389,7 +385,7 @@ var Sprite = new Class({
      * @fires Phaser.Animations.Events#ANIMATION_STOP
      * @since 3.50.0
      *
-     * @param {integer} delay - The number of milliseconds to wait before stopping this animation.
+     * @param {number} delay - The number of milliseconds to wait before stopping this animation.
      *
      * @return {this} This Game Object.
      */
@@ -412,7 +408,7 @@ var Sprite = new Class({
      * @fires Phaser.Animations.Events#ANIMATION_STOP
      * @since 3.50.0
      *
-     * @param {integer} [repeatCount=1] - How many times should the animation repeat before stopping?
+     * @param {number} [repeatCount=1] - How many times should the animation repeat before stopping?
      *
      * @return {this} This Game Object.
      */
